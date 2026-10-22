@@ -7,7 +7,9 @@ on:
 
 permissions:
   contents: read
-  packages: write
+
+env:
+  DOCKER_ORGANIZATION: ${{ vars.DOCKER_ORGANIZATION || 'nexusbank' }}
 
 jobs:
   backend:
@@ -25,19 +27,27 @@ jobs:
           git clone https://github.com/finetech-nexus/marble-backend.git api
           git -C api checkout "$sha"
 
-      - name: Login to GHCR
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Git short SHA
+        id: sha
+        run: echo "short_sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Build and push backend
         uses: docker/build-push-action@v6
         with:
           context: api
           push: true
-          tags: ghcr.io/finetech-nexus/marble-backend:latest
+          tags: |
+            ${{ env.DOCKER_ORGANIZATION }}/marble-backend:latest
+            ${{ env.DOCKER_ORGANIZATION }}/marble-backend:${{ steps.sha.outputs.short_sha }}
           build-args: |
             MARBLE_VERSION=v1.12.0
 
@@ -56,16 +66,24 @@ jobs:
           git clone https://github.com/finetech-nexus/marble-frontend.git front
           git -C front checkout "$sha"
 
-      - name: Login to GHCR
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Git short SHA
+        id: sha
+        run: echo "short_sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Build and push frontend
         uses: docker/build-push-action@v6
         with:
           context: front
           push: true
-          tags: ghcr.io/finetech-nexus/marble-frontend:latest
+          tags: |
+            ${{ env.DOCKER_ORGANIZATION }}/marble-frontend:latest
+            ${{ env.DOCKER_ORGANIZATION }}/marble-frontend:${{ steps.sha.outputs.short_sha }}
