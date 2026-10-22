@@ -16,8 +16,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          submodules: recursive
-          token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: false
+
+      - name: Checkout api
+        run: |
+          sha=$(git rev-parse HEAD:api)
+          rm -rf api
+          git clone https://github.com/finetech-nexus/marble-backend.git api
+          git -C api checkout "$sha"
 
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -41,8 +47,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          submodules: recursive
-          token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: false
+
+      - name: Checkout frontend
+        run: |
+          sha=$(git rev-parse HEAD:front)
+          rm -rf front
+          git clone https://github.com/finetech-nexus/marble-frontend.git front
+          git -C front checkout "$sha"
 
       - name: Login to GHCR
         uses: docker/login-action@v3
